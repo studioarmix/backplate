@@ -1,163 +1,192 @@
-# Jumpstart API
+# Backbone API
+Create beautiful Flask-based, RESTful APIs with Backbone's API helper methods.
 
-Create beautiful Flask-based, RESTful APIs with Jumpstart API's helper methods.
-
-Common account security implementations such as:
-
-- refresh token and access token exchange
-- login with Facebook token exchange and user resolution
-- more to come.
+## Features
+- Simple endpoint generation helpers.
+- JSON error formatting helpers for application exceptions.
+- Basic response data/error enveloping.
 
 ```bash
-$ pip install jumpstartapi
+$ pip install backbone
 ```
 
 ## Quickstart
+Creating a simple Flask RESTful API app prefixed with `/v1`.
 
-Creating a simple Flask app with the API endpoint at `/api/v1`.
-
-Creates endpoints for `profile` and `business` under the names `/profile` and `/businesses`. Under the hood, the `endpoint()` is registering the endpoint with an indexController for `Businesses` and a childController for `Business`, which is returned by `/businesses` and `/businesses/:id` respectively.
+- Creates endpoints for `me` and `item` under the names `/me` and `/items`
+- Endpoints such as `items` can have:
+  - indexController (`/items`) and,
+  - childController (`/items/:id`).
 
 ```python
-# api.py
+# example.py
 
 from flask import Flask
-from jumpstartapi import create_api, endpoint
+from flask_restful import Resource
+from backbone import create_api, endpoint
+
+class Profile(Resource):
+    # /v1/me
+    def get(self):
+        return {'id': 1}
+
+class Items(Resource):
+    # /v1/items
+    def get(self):
+        return [{'id': idx} for idx in range(0, 20)]
+
+class Item(Resource):
+    # /v1/items/:id
+    def get(self, id):
+        return {'id': id}
 
 endpoints = [
-    endpoint('profile', '/profile', Profile),
-    endpoint('business', '/businesses', Businesses, Business)
+    endpoint('me', '/me', Profile),
+    endpoint('item', '/items', Items, Item)
 ]
-
-decorators = [...]
-
-api = create_api('api', __name__, endpoints=endpoints, decorators=decorators)
-
-# __init__.py
-
-from .api import api
 
 app = Flask(__name__)
-app.register_blueprint(api, url_prefix='/api/v1')
+create_api(__name__, app=app, endpoints=endpoints)
+
+if __name__ == '__main__':
+    app.run()
+
 ```
 
-
-
-## Creating an API with Endpoints
-
-### create_api(name, handle, endpoints=[], decorators=[])
-
-Creates a `flask.Blueprint` using `name` and `handle`.
-
-Creates a `flask_restful.Api` using the blueprint created and the array of `decorators`.
-
-Returns a tuple with the `flask.Blueprint` instance and the `flask_restful.Api` instance, in that order.
-
-Binds `handle_error` and `application/json` presentation logic to the `Api` instance.
-
-Adds `endpoints` through processing the route tuples to form nested routes for the API using the `add_resource` method from the `Api` instance.
-
-### endpoint(name, url, indexController=None, childController=None, children=[])
-
-Creates and returns a tuple for use with `create_api`'s internal route processing and binding.
-
-`name`is a string used to construct an unique endpoint value.
-
-`url` is a string used to define the url name of the resource.
-
-`indexController` expects a class inheriting a `flask_restful` `Resource` object, used for accessing the route when accessed without any child references i.e. `/profile`.
-
-`childController` also expects a `flask_restful#Resource` object, used for accessing the route when accessed with a child id i.e. `/businesses/1`. The `id` passed as the first parameter of the class instance's various response methods e.g. `get(self, id)`, `post(self, id)` etc.
-
-`children` expects a list of  `endpoint` formed tuples that allow for endpoint structures like `/profile/payments` etc.
-
-###Example
+## Error Handling
+Passing `errors` parameter into `backbone.create_api()` enables for a consistent error handling experience.
 
 ```python
-# api.py
+# example.py
 
-from jumpstartapi import create_api, endpoint
+from backbone import APIError, errordef
 
-endpoints = [
-    endpoint('profile', '/profile', Profile),
-    endpoint('business', '/businesses', Businesses, Business)
+# ...
+
+ERR_TEAPOT = 'ERR_TEAPOT'
+
+errors = [
+    errordef(ERR_TEAPOT, 418, 'I am a custom error.')
 ]
 
-decorators = [...]
+# ...
 
-api = create_api(
-	'api', __name__,
-	endpoints=endpoints,
-	decorators=decorators
+class Item(Resource):
+    def get(self, id):
+        # raise custom error
+        raise APIError(ERR_TEAPOT, data={
+            'fields': {'random': 'Incorrect anything.'}})
+
+# ...
+
+create_api(..., errors=errors)
+
+# ...
+```
+
+The `<backbone.APIError>` constructor takes `code`, and optional arguments `status`, and `description`.
+
+The `code` argument is used to match an error created by `backbone.errordef()` in the `errors` array (which is converted into a dict/map internally), and then (using the pre-defined `errors` map as a fallback) generates and formats an appropriate error response with HTTP status code.
+
+Raising an error like `raise APIError(ERR_TEAPOT)` will then be formatted and completed to use the fallback `code` and `description` values provided in the `errors` array that was passed to the `backbone.create_api()` method.
+
+Errors do not need to be defined in the `errors` array to be raised.
+
+
+## Backbone API Documentation
+
+### backbone.create_api(handle, ...)
+Creates API objects for app.
+
+Returns tuple `[<flask.Blueprint>, <flask_restful.Api>]`.
+
+#### Parameters
+
+##### `handle: string`
+`flask.Blueprint` constructor `handle` argument.
+
+##### `app?: <flask.Flask>`
+Optional reference to `flask.Flask` object instance to bind with.
+
+##### `endpoints?: array<tuple> = []`
+Array of tuples generated from the `backbone.endpoint()` helper.
+
+##### `decorators?: array<function> = []`
+`flask_restful.Api` constructor `decorators` argument.
+
+##### `prefix?: string = '/v1'`
+String for url prefix of all endpoint urls.
+
+##### `name?: string = 'api'`
+`flask.Blueprint` constructor `name` argument.
+
+##### `errors?: array<dict> = []`
+Array of objects generated from the `backbone.errordef()` helper.
+
+##### `mediatypes?: dict = {}`
+Dictionary of media types with key as string e.g. `application/json` and value as function that takes `data, status, headers=[]` and returns `flask.Response` object instance.
+
+By default the `application/json` media type is added if no custom media types are specified, therefore specifying your own would require manually defining `application/json` into the dict.
+
+```python
+from backbone import (
+    create_json_output_handler,
+    format_json_response
 )
+
+json_formatter = format_json_response
+json_output_handler = create_json_output_handler(json_formatter)
+
+mediatypes = {
+    'application/json': json_output_handler,
+    # ... other media type definitions
+}
 ```
 
-## Adding Token API Authentication Flow
+##### `error_handler?: (e: <Exception>) => <flask.Response>`
+Function to override default `error_handler`, which is the result of `backbone.create_error_handler`.
 
-When creating your API instance through `create_api` add the `token_auth_required` decorator as a list item for the `decorators` parameter to enforce the API to `401 Unauthorized` abort if:
+##### `json_output_handler?: (data: any, status: int, headers?: array<string>) => <flask.Response>`
+Function to override default `json_output_handler`, which is the result of `backbone.create_json_output_handler`. If manually specifying the `mediatypes` parameter, this override will not be effective.
 
-1. the token is invalid and/or expired
-2. the user id referenced by the token can not be found in the database
+##### `json_formatter?: (data: any, code: int) => dict`
+Function to override the default `json_formatter` function that is passed into the `error_handler` and `json_output_handler` creator methods.
 
-```python
-from jumpstartapi.auth import token_auth_required
-from models import User
+If specifying a custom `error_handler` or `json_output_handler`, this override will not be effective for the respective handler. Furthermore, if manually specifying the `mediatypes` parameter, this override will not be effective for the `json_output_handler`.
 
-decorators = [
-  	token_auth_required(User)
-]
-```
+#### Functionality
+1. Creates a `flask.Blueprint` using `name` and `handle`.
+1. Creates a `flask_restful.Api` using the array of `decorators`.
+1. Injects `error_handler` into `flask_restful.Api.handle_error` method.
+1. Enables `catch_all_404s`.
+1. Registers all media type representations from `mediatypes`.
+1. Registers all processed routes with blueprint from `endpoints` using `flask_restful.Api.add_resource` method.
+1. Binds the blueprint with the `app` using the `url_prefix`.
+1. Adds CORS origins headers, defaulting with `*`.
+1. Injects `error_handler` into `flask.Flask.handle_bad_request` method of `app`, using `<Exception>` to handle everything.
+1. Returns tuple.
 
-### token_auth_required(user_class, ignored_endpoints=[])
+### backbone.endpoint(name, url, ...)
+Creates tuples for use with `<backbone.create_api>` internal route processing and binding.
 
-Returns a decorator for use with the `Api` instance created with `create_api`.
+#### Parameters
 
-Adds logic that attempts to retrieve an access token from the HTTP header `Authorization` in the format `Bearer <token>`, or from the url query string value of `access_token`.
+##### `name: string`
+Unique name for endpoint node; used to generate resource endpoint paths.
 
-The logic then attempts to parse and validate the access token to derive the user id, and then adds the resolved user SQLAlchemy object instance accessible at `g.user`, and the used access token at `g.token`, for the context of the request.
+##### `url: string`
+Unique url path name with leading `/`, e.g. `'/items'`.
 
-The `user_class` parameter takes a SQLAlchemy queryable declarative class reference.
+##### `indexController?: <flask_restful.Resource>`
+Expects a class inheriting a `<flask_restful.Resource>` object, used for accessing the route when accessed without any child references i.e. `/items`.
 
-The `ignored_endpoints` parameter allows specification of endpoint id, which is set by the following pattern when using `create_api` with routes.
+##### `indexController?: <flask_restful.Resource>`
+Also expects a class inheriting a `<flask_restful.Resource>` object, used for when the route is accessed with a child id i.e. `/items/1`.
 
-### token_renew_endpoint()
+The `id` passed as the a parameter of the class instance's various response methods e.g. `get(self, id)`, `post(self, id)` etc. and for nested routes is passed as parameters in parent to leaf order.
 
-Returns a `TokenRenewEndpoint` `flask_restful.Resource` class object for an `endpoint` as an `indexController`.
+##### `children?: array<tuple> = []`
+An array of child endpoints generated with `backbone.endpoint()`, to allow for nesting url structures, e.g. `/items/:id/attachments`.
 
-Provides a `POST` and `DELETE` actions to the specified url e.g. `/token`.
-
-`POST /token?refresh_token=TOKEN`
-
-`DELETE /token?refresh_token=TOKEN`
-
-```python
-from jumpstartapi.auth import token_renew_endpoint
-from models import RefreshToken
-
-TokenRenewEndpoint = token_renew_endpoint(
-    refresh_token_class=RefreshToken)
-
-# ...
-endpoints = [
-    endpoint('token', '/token', TokenRenewEndpoint)
-]
-```
-
-### facebook_auth_endpoint()
-
-Returns a `FacebookAuthEndpoint` `flask_restful.Resource` class object for use with an `endpoint` as a controller.
-
-Requires `FACEBOOK_CLIENT_ID` and `FACEBOOK_CLIENT_SECRET` from the Flask app config otherwise requests to the API with raise runtime exceptions.
-
-```python
-from jumpstartapi.auth.facebook import facebook_auth_endpoint
-from models import User, RefreshToken
-
-FacebookAuthEndpoint = facebook_auth_endpoint(
-    user_class=User, refresh_token_class=RefreshToken)
-
-# ...
-endpoints = [
-	endpoint('auth', '/auth', FacebookAuthEndpoint)
-]
-```
+##### `child_type?: string = 'int'`
+A reference to the type of argument to expect from, of either `int` or `string`.

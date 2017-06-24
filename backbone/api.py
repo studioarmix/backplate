@@ -17,8 +17,8 @@ def errorsmap(errors):
     return _errors
 
 def create_api(
-    name, handle,
-    endpoints=[], decorators=[], errors=[], mediatypes=[],
+    handle, name='api',
+    endpoints=[], decorators=[], errors=[], mediatypes={},
     app=None, prefix='/v1',
     error_handler=None, json_output_handler=None, json_formatter=None
 ):

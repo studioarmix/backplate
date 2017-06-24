@@ -3,7 +3,7 @@ def create_url(url):
     """Provide support for more concise route url definitions
 
     Convert '/entity/:id' into '/entity/<int:id>'
-    Convert '/entity/str:id' into '/entity/<string:id>'
+    Convert '/entity/string:id' into '/entity/<string:id>'
     """
 
     parts = url.split('/')
