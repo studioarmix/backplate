@@ -1,16 +1,57 @@
 # Jumpstart API
 
-Assumes an RESTful API based on Flask, SQLAlchemy and Marshmallow
+Create beautiful Flask-based, RESTful APIs with Jumpstart API's helper methods.
 
-## Creating API and RESTful Endpoints
+Common account security implementations such as:
+
+- refresh token and access token exchange
+- login with Facebook token exchange and user resolution
+- more to come.
+
+```bash
+$ pip install jumpstartapi
+```
+
+## Quickstart
+
+Creating a simple Flask app with the API endpoint at `/api/v1`.
+
+Creates endpoints for `profile` and `business` under the names `/profile` and `/businesses`. Under the hood, the `endpoint()` is registering the endpoint with an indexController for `Businesses` and a childController for `Business`, which is returned by `/businesses` and `/businesses/:id` respectively.
+
+```python
+# api.py
+
+from flask import Flask
+from jumpstartapi import create_api, endpoint
+
+endpoints = [
+    endpoint('profile', '/profile', Profile),
+    endpoint('business', '/businesses', Businesses, Business)
+]
+
+decorators = [...]
+
+api = create_api('api', __name__, endpoints=endpoints, decorators=decorators)
+
+# __init__.py
+
+from .api import api
+
+app = Flask(__name__)
+app.register_blueprint(api, url_prefix='/api/v1')
+```
+
+
+
+## Creating an API with Endpoints
 
 ### create_api(name, handle, endpoints=[], decorators=[])
 
-Returns a tuple with the `flask` `Blueprint` instance and a `flask_restful` `Api` instance of the API.
+Creates a `flask.Blueprint` using `name` and `handle`.
 
-Creates a `flask` `Blueprint` using `name` and `handle`.
+Creates a `flask_restful.Api` using the blueprint created and the array of `decorators`.
 
-Creates a `flask_restful` `Api` using the blueprint created and the array of `decorators`.
+Returns a tuple with the `flask.Blueprint` instance and the `flask_restful.Api` instance, in that order.
 
 Binds `handle_error` and `application/json` presentation logic to the `Api` instance.
 
@@ -18,7 +59,7 @@ Adds `endpoints` through processing the route tuples to form nested routes for t
 
 ### endpoint(name, url, indexController=None, childController=None, children=[])
 
-Returns a formed tuple for use with `create_api`'s internal route processing and binding.
+Creates and returns a tuple for use with `create_api`'s internal route processing and binding.
 
 `name`is a string used to construct an unique endpoint value.
 
@@ -33,7 +74,7 @@ Returns a formed tuple for use with `create_api`'s internal route processing and
 ###Example
 
 ```python
-# __init__.py
+# api.py
 
 from jumpstartapi import create_api, endpoint
 
@@ -44,7 +85,7 @@ endpoints = [
 
 decorators = [...]
 
-bp, api = create_api(
+api = create_api(
 	'api', __name__,
 	endpoints=endpoints,
 	decorators=decorators

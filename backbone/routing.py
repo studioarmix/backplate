@@ -3,7 +3,7 @@ def create_url(url):
     """Provide support for more concise route url definitions
 
     Convert '/entity/:id' into '/entity/<int:id>'
-    Convert '/entity/str:id' into '/entity/<str:id>'
+    Convert '/entity/str:id' into '/entity/<string:id>'
     """
 
     parts = url.split('/')
@@ -41,13 +41,15 @@ def create_endpoint(url):
     return '-'.join(parsed)
 
 
-def endpoint(name, url, indexController=None, childController=None, children=[]):
+def endpoint(name, url,
+             index_controller=None, child_controller=None,
+             children=[], child_type='int'):
     """Returns a tuple to contruct API routes"""
-    return (name, url, indexController, childController, children)
+    return (name, url, index_controller, child_controller, children, child_type)
 
 
 def create_routes(routes):
-    """Returns an array of route tuples from potentially nested routes structure"""
+    """Returns an array of route tuples from a nested routes structure"""
 
     parsed = []
 
@@ -55,32 +57,32 @@ def create_routes(routes):
         """Recursive routes parsing function to generate endpoints"""
 
         for route in _routes:
-            name, url, indexController, childController, children = route
+            name, url, index_controller, child_controller, children, child_type = route # noqa
 
             url = url[1:] if url.startswith('/') else url
 
-            preUrlIndex = '{}/{}'.format(preUrl, url)
-            preUrlChild = '{}/{}/:id'.format(preUrl, url)
-            preEndIndex = '{}-{}-index'.format(preEnd, name)
-            preEndChild = '{}-{}-child'.format(preEnd, name)
+            index_url = '{}/{}'.format(preUrl, url)
+            child_url = '{}/{}/{}:id'.format(preUrl, url, child_type)
+            index_endpoint = '{}-{}-index'.format(preEnd, name)
+            child_endpoint = '{}-{}-child'.format(preEnd, name)
 
-            if preUrlIndex.startswith('/'):
-                preUrlIndex = preUrlIndex[1:]
-            if preUrlChild.startswith('/'):
-                preUrlChild = preUrlChild[1:]
-            if preEndIndex.startswith('-'):
-                preEndIndex = preEndIndex[1:]
-            if preEndChild.startswith('-'):
-                preEndChild = preEndChild[1:]
-            if not childController:
-                preEndIndex = preEndIndex[:-len('-index')]
+            if index_url.startswith('/'):
+                index_url = index_url[1:]
+            if child_url.startswith('/'):
+                child_url = child_url[1:]
+            if index_endpoint.startswith('-'):
+                index_endpoint = index_endpoint[1:]
+            if child_endpoint.startswith('-'):
+                child_endpoint = child_endpoint[1:]
+            if not child_controller:
+                index_endpoint = index_endpoint[:-len('-index')]
 
-            parsed.append((preUrlIndex, indexController, preEndIndex))
-            if childController:
-                parsed.append((preUrlChild, childController, preEndChild))
-                parse_routes(children, preUrlChild, preEndChild)
+            parsed.append((index_url, index_controller, index_endpoint))
+            if child_controller:
+                parsed.append((child_url, child_controller, child_endpoint))
+                parse_routes(children, child_url, child_endpoint)
             else:
-                parse_routes(children, preUrlIndex, preEndIndex)
+                parse_routes(children, index_url, index_endpoint)
 
     parse_routes(routes)
     return parsed

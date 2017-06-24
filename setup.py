@@ -2,21 +2,17 @@
 from distutils.core import setup
 
 setup(
-    name='jumpstartapi',
+    name='backbone',
     version='0.1',
-    description='RESTful API Jumpstart Utilities',
+    description='RESTful API Helpers',
     author='Peter Boyer',
     author_email='petertboyer@gmail.com',
-    url='https://github.com/studioarmix/jumpstart-api',
-    packages=['jumpstartapi'],
+    url='https://github.com/studioarmix/backbone',
+    packages=['backbone'],
     license='MIT',
     install_requires=[
         'flask',
         'flask-restful',
-        'sqlalchemy',
-        'requests',
-        'marshmallow',
-        'webargs',
-        'pyjwt'
+        'flask_cors'
     ]
 )
