@@ -1,7 +1,7 @@
 
 from flask import Flask
 from flask_restful import Resource
-from backbone import create_api, endpoint
+from backplate import create_api, endpoint
 
 class Profile(Resource):
     def get(self):

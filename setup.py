@@ -2,13 +2,13 @@
 from setuptools import setup
 
 setup(
-    name='backbone',
+    name='backplate',
     version='0.0.1',
     description='RESTful API Helpers',
     author='Peter Boyer',
     author_email='petertboyer@gmail.com',
-    url='https://github.com/studioarmix/backbone',
-    packages=['backbone'],
+    url='https://github.com/studioarmix/backplate',
+    packages=['backplate'],
     license='MIT',
     install_requires=[
         'flask',

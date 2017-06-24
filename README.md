@@ -1,5 +1,5 @@
-# Backbone API
-Create beautiful Flask-based, RESTful APIs with Backbone's API helper methods.
+# Backplate API
+Create beautiful Flask-based, RESTful APIs with Backplate's API helper methods.
 
 ## Features
 - Simple endpoint generation helpers.
@@ -7,7 +7,7 @@ Create beautiful Flask-based, RESTful APIs with Backbone's API helper methods.
 - Basic response data/error enveloping.
 
 ```bash
-$ pip install backbone
+$ pip install backplate
 ```
 
 ## Quickstart
@@ -23,7 +23,7 @@ Creating a simple Flask RESTful API app prefixed with `/v1`.
 
 from flask import Flask
 from flask_restful import Resource
-from backbone import create_api, endpoint
+from backplate import create_api, endpoint
 
 class Profile(Resource):
     # /v1/me
@@ -54,12 +54,12 @@ if __name__ == '__main__':
 ```
 
 ## Error Handling
-Passing `errors` parameter into `backbone.create_api()` enables for a consistent error handling experience.
+Passing `errors` parameter into `backplate.create_api()` enables for a consistent error handling experience.
 
 ```python
 # example.py
 
-from backbone import APIError, errordef
+from backplate import APIError, errordef
 
 # ...
 
@@ -84,18 +84,18 @@ create_api(..., errors=errors)
 # ...
 ```
 
-The `<backbone.APIError>` constructor takes `code`, and optional arguments `status`, and `description`.
+The `<backplate.APIError>` constructor takes `code`, and optional arguments `status`, and `description`.
 
-The `code` argument is used to match an error created by `backbone.errordef()` in the `errors` array (which is converted into a dict/map internally), and then (using the pre-defined `errors` map as a fallback) generates and formats an appropriate error response with HTTP status code.
+The `code` argument is used to match an error created by `backplate.errordef()` in the `errors` array (which is converted into a dict/map internally), and then (using the pre-defined `errors` map as a fallback) generates and formats an appropriate error response with HTTP status code.
 
-Raising an error like `raise APIError(ERR_TEAPOT)` will then be formatted and completed to use the fallback `code` and `description` values provided in the `errors` array that was passed to the `backbone.create_api()` method.
+Raising an error like `raise APIError(ERR_TEAPOT)` will then be formatted and completed to use the fallback `code` and `description` values provided in the `errors` array that was passed to the `backplate.create_api()` method.
 
 Errors do not need to be defined in the `errors` array to be raised.
 
 
-## Backbone API Documentation
+## Backplate API Documentation
 
-### backbone.create_api(handle, ...)
+### backplate.create_api(handle, ...)
 Creates API objects for app.
 
 Returns tuple `[<flask.Blueprint>, <flask_restful.Api>]`.
@@ -109,7 +109,7 @@ Returns tuple `[<flask.Blueprint>, <flask_restful.Api>]`.
 Optional reference to `flask.Flask` object instance to bind with.
 
 ##### `endpoints?: array<tuple> = []`
-Array of tuples generated from the `backbone.endpoint()` helper.
+Array of tuples generated from the `backplate.endpoint()` helper.
 
 ##### `decorators?: array<function> = []`
 `flask_restful.Api` constructor `decorators` argument.
@@ -121,7 +121,7 @@ String for url prefix of all endpoint urls.
 `flask.Blueprint` constructor `name` argument.
 
 ##### `errors?: array<dict> = []`
-Array of objects generated from the `backbone.errordef()` helper.
+Array of objects generated from the `backplate.errordef()` helper.
 
 ##### `mediatypes?: dict = {}`
 Dictionary of media types with key as string e.g. `application/json` and value as function that takes `data, status, headers=[]` and returns `flask.Response` object instance.
@@ -129,7 +129,7 @@ Dictionary of media types with key as string e.g. `application/json` and value a
 By default the `application/json` media type is added if no custom media types are specified, therefore specifying your own would require manually defining `application/json` into the dict.
 
 ```python
-from backbone import (
+from backplate import (
     create_json_output_handler,
     format_json_response
 )
@@ -144,10 +144,10 @@ mediatypes = {
 ```
 
 ##### `error_handler?: (e: <Exception>) => <flask.Response>`
-Function to override default `error_handler`, which is the result of `backbone.create_error_handler`.
+Function to override default `error_handler`, which is the result of `backplate.create_error_handler`.
 
 ##### `json_output_handler?: (data: any, status: int, headers?: array<string>) => <flask.Response>`
-Function to override default `json_output_handler`, which is the result of `backbone.create_json_output_handler`. If manually specifying the `mediatypes` parameter, this override will not be effective.
+Function to override default `json_output_handler`, which is the result of `backplate.create_json_output_handler`. If manually specifying the `mediatypes` parameter, this override will not be effective.
 
 ##### `json_formatter?: (data: any, code: int) => dict`
 Function to override the default `json_formatter` function that is passed into the `error_handler` and `json_output_handler` creator methods.
@@ -166,8 +166,8 @@ If specifying a custom `error_handler` or `json_output_handler`, this override w
 1. Injects `error_handler` into `flask.Flask.handle_bad_request` method of `app`, using `<Exception>` to handle everything.
 1. Returns tuple.
 
-### backbone.endpoint(name, url, ...)
-Creates tuples for use with `<backbone.create_api>` internal route processing and binding.
+### backplate.endpoint(name, url, ...)
+Creates tuples for use with `<backplate.create_api>` internal route processing and binding.
 
 #### Parameters
 
@@ -186,7 +186,7 @@ Also expects a class inheriting a `<flask_restful.Resource>` object, used for wh
 The `id` passed as the a parameter of the class instance's various response methods e.g. `get(self, id)`, `post(self, id)` etc. and for nested routes is passed as parameters in parent to leaf order.
 
 ##### `children?: array<tuple> = []`
-An array of child endpoints generated with `backbone.endpoint()`, to allow for nesting url structures, e.g. `/items/:id/attachments`.
+An array of child endpoints generated with `backplate.endpoint()`, to allow for nesting url structures, e.g. `/items/:id/attachments`.
 
 ##### `child_type?: string = 'int'`
 A reference to the type of argument to expect from, of either `int` or `string`.
