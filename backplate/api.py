@@ -83,3 +83,5 @@ def create_api(
             return _error_handler(e)
 
     return bp, api
+
+__all__ = ['create_api']

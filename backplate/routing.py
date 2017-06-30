@@ -53,7 +53,7 @@ def create_routes(routes):
 
     parsed = []
 
-    def parse_routes(_routes, preUrl='', preEnd=''):
+    def parse_routes(_routes, pre_url='', pre_end=''):
         """Recursive routes parsing function to generate endpoints"""
 
         for route in _routes:
@@ -61,10 +61,10 @@ def create_routes(routes):
 
             url = url[1:] if url.startswith('/') else url
 
-            index_url = '{}/{}'.format(preUrl, url)
-            child_url = '{}/{}/{}:id'.format(preUrl, url, child_type)
-            index_endpoint = '{}-{}-index'.format(preEnd, name)
-            child_endpoint = '{}-{}-child'.format(preEnd, name)
+            index_url = '{}/{}'.format(pre_url, url)
+            child_url = '{}/{}/{}:id'.format(pre_url, url, child_type)
+            index_endpoint = '{}-{}-index'.format(pre_end, name)
+            child_endpoint = '{}-{}-child'.format(pre_end, name)
 
             if index_url.startswith('/'):
                 index_url = index_url[1:]
@@ -104,3 +104,5 @@ def bind_routes(api, routes=[]):
     for route in routes:
         url, controller, endpoint = route
         add_endpoint(api, url, controller, endpoint)
+
+__all__ = ['endpoint']

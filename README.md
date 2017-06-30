@@ -177,10 +177,10 @@ Unique name for endpoint node; used to generate resource endpoint paths.
 ##### `url: string`
 Unique url path name with leading `/`, e.g. `'/items'`.
 
-##### `indexController?: <flask_restful.Resource>`
+##### `index_controller?: <flask_restful.Resource>`
 Expects a class inheriting a `<flask_restful.Resource>` object, used for accessing the route when accessed without any child references i.e. `/items`.
 
-##### `indexController?: <flask_restful.Resource>`
+##### `child_controller?: <flask_restful.Resource>`
 Also expects a class inheriting a `<flask_restful.Resource>` object, used for when the route is accessed with a child id i.e. `/items/1`.
 
 The `id` passed as the a parameter of the class instance's various response methods e.g. `get(self, id)`, `post(self, id)` etc. and for nested routes is passed as parameters in parent to leaf order.

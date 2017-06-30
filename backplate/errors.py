@@ -90,3 +90,5 @@ def create_error_handler(errors={}, json_formatter=None):
         resp = jsonify(data)
         return resp, status
     return handle_error
+
+__all__ = ['APIError', 'errordef']
