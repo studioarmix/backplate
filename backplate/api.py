@@ -67,6 +67,9 @@ def create_api(
     bind_routes(api, create_routes(endpoints))
 
     if app:
+        app.api = api
+        app.api_blueprint = bp
+
         # add api blueprint to app
         app.register_blueprint(bp, url_prefix=prefix)
 
@@ -81,6 +84,8 @@ def create_api(
         @app.errorhandler(Exception)
         def handle_bad_request(e):
             return _error_handler(e)
+
+        return app
 
     return bp, api
 
