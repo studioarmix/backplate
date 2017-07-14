@@ -1,6 +1,8 @@
 
 import math
 from datetime import datetime
+from functools import wraps
+from flask import abort, g
 
 class Throttle(object):
 
@@ -58,6 +60,9 @@ class ThrottlerBase(object):
 
     # Optional Event Methods
 
+    def resolve_user_id(self):
+        return g.user
+
     def on_throttle_normal(self, id):
         # optionally bind actions
         # return None
@@ -92,3 +97,19 @@ class ThrottlerBase(object):
         # trigger throttle exceed events
         self.on_throttle_exceed(id)
         return False
+
+
+def create_throttler_decorator(Throttler):
+
+    throttler = Throttler
+
+    def wrapper(f):
+        @wraps(f)
+        def wrapped(*args, **kwargs):
+            user_id = throttler.resolve_user_id()
+            if throttler.request(id=user_id):
+                return f(*args, **kwargs)
+            return abort(429) # Too Many Requests
+
+        return wrapped
+    return wrapper
