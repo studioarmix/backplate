@@ -16,6 +16,7 @@ $ pip install backplate
 - Seamless integration of authentication flows with [backplate-auth](https://github.com/studioarmix/backplate-auth).
 
 - [Documentation](https://github.com/studioarmix/backplate/tree/master/docs)
+- [Example Project App (Source)](https://github.com/studioarmix/backplate/tree/master/example)
 
 ## Quickstart
 
