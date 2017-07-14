@@ -61,7 +61,7 @@ class ThrottlerBase(object):
     # Optional Event Methods
 
     def resolve_user_id(self):
-        return g.user
+        return g.user.id
 
     def on_throttle_normal(self, id):
         # optionally bind actions
@@ -113,3 +113,5 @@ def create_throttler_decorator(Throttler):
 
         return wrapped
     return wrapper
+
+__all__ = ['Throttle', 'ThrottlerBase', 'create_throttler_decorator']
