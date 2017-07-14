@@ -2,6 +2,7 @@
 import logging
 
 from flask import jsonify
+from flask_api import status as HTTP_Statuses
 
 log = logging.getLogger(__name__)
 
@@ -29,16 +30,18 @@ class APIError(Exception):
 
         return error_object
 
-generics = {
-    400: 'Bad Request',
-    401: 'Unauthorized',
-    403: 'Forbidden',
-    404: 'Not Found',
-    405: 'Method Not Allowed',
-    410: 'Gone',
-    500: 'Internal Server Error',
-    503: 'Service Unavailable'
-}
+generics = {}
+for status_string in dir(HTTP_Statuses):
+    if not status_string.startswith('HTTP_'):
+        continue
+
+    status = int(status_string[5:8])
+    name = status_string[9:]
+
+    generics[status] = name \
+        .replace('_', ' ') \
+        .title() \
+        .replace('Http', 'HTTP')
 
 def errordef(code, status=400, message=None, exception=None):
     return {
@@ -87,9 +90,12 @@ def create_error_handler(errors={}, json_formatter=None):
                 status = status
                 message = None
 
-                generic = generics[status]
+                generic = generics.get(status, 'API Error')
                 if generic:
-                    code = generic.replace(' ', '_').upper()
+                    code = '{}_{}'.format(
+                        status,
+                        generic.replace(' ', '_').upper()
+                    )
                     message = generic
                 else:
                     code = 'GENERAL_ERROR'
