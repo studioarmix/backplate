@@ -7,7 +7,7 @@ from flask_api import status as HTTP_Statuses
 log = logging.getLogger(__name__)
 
 class APIError(Exception):
-    def __init__(self, code, status=400, message=None, data=None):
+    def __init__(self, code, status=None, message=None, data=None):
         self.code = code
         self.status = status
         self.message = message
