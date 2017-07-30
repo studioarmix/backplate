@@ -91,6 +91,9 @@ def create_routes(routes):
 def add_endpoint(api, url, controller, endpoint=None):
     """Adds an endpoint to given restful_api object"""
 
+    if not controller:
+        return
+
     url = create_url(url)
     if not endpoint:
         endpoint = create_endpoint(url)
