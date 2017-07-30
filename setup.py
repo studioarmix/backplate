@@ -13,7 +13,6 @@ setup(
     install_requires=[
         'flask',
         'flask-restful',
-        'flask-cors',
-        'flask-api'
+        'flask-cors'
     ]
 )

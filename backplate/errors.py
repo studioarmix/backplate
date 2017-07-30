@@ -1,8 +1,7 @@
 
 import logging
 
-from flask import jsonify
-from flask_api import status as HTTP_Statuses
+from flask import jsonify, current_app
 
 log = logging.getLogger(__name__)
 
@@ -29,19 +28,6 @@ class APIError(Exception):
             error_object['data'] = data
 
         return error_object
-
-generics = {}
-for status_string in dir(HTTP_Statuses):
-    if not status_string.startswith('HTTP_'):
-        continue
-
-    status = int(status_string[5:8])
-    name = status_string[9:]
-
-    generics[status] = name \
-        .replace('_', ' ') \
-        .title() \
-        .replace('Http', 'HTTP')
 
 def errordef(code, status=400, message=None, exception=None):
     return {
@@ -89,19 +75,23 @@ def create_error_handler(errors={}, json_formatter=None):
                 code = None
                 status = status
                 message = None
+                data = getattr(e, 'data', None)
 
-                generic = generics.get(status, 'API Error')
-                if generic:
+                msg = str(e)
+                if ':' in msg and len(msg.split(' ')[0].strip()) == 3:
+                    status = int(msg.split(' ')[0].strip())
+                    code = msg[3:msg.index(':')].strip()
                     code = '{}_{}'.format(
                         status,
-                        generic.replace(' ', '_').upper()
+                        code.replace(' ', '_').upper()
                     )
-                    message = generic
+                    message = str(e)[msg.index(':') + 1:].strip()
+
                 else:
-                    code = 'GENERAL_ERROR'
+                    code = str(type(e).__name__).replace(' ', '_').upper()
                     message = str(e)
 
-                e = APIError(code, status, message)
+                e = APIError(code, status, message, data)
 
         error = errors.get(e.code)
         if error:
@@ -109,11 +99,12 @@ def create_error_handler(errors={}, json_formatter=None):
             e.message = e.message or error['message']
 
         # log exception if 500 server error
-        # remove message for consumer facing data
+        # remove message for consumer facing data if not on DEBUG mode
         status = e.status
         if status >= 500:
             log.exception(e)
-            e.message = None
+            if current_app.config.get('DEBUG') is not True:
+                e.message = None
 
         # json formatter for data envelopes
         data = e.format()
