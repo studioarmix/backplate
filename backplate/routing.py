@@ -62,7 +62,7 @@ def create_routes(routes):
             url = url[1:] if url.startswith('/') else url
 
             index_url = '{}/{}'.format(pre_url, url)
-            child_url = '{}/{}/{}:id'.format(pre_url, url, child_type)
+            child_url = '{}/{}/{}:{}_id'.format(pre_url, url, child_type, name)
             index_endpoint = '{}-{}-index'.format(pre_end, name)
             child_endpoint = '{}-{}-child'.format(pre_end, name)
 
