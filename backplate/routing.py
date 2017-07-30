@@ -6,12 +6,21 @@ def create_url(url):
     Convert '/entity/string:id' into '/entity/<string:id>'
     """
 
+    def select_type(_type):
+        if _type == 'int':
+            return 'int'
+        elif _type == 'str':
+            return 'string'
+        else:
+            return 'int'
+
     parts = url.split('/')
     parsed = []
     for part in parts:
         if part.find(':') != -1:
-            kind, name = part.split(':')
-            parsed.append('<{}:{}>'.format(kind or 'int', name))
+            child_type, name = part.split(':')
+            child_type = select_type(child_type)
+            parsed.append('<{}:{}>'.format(child_type, name))
         else:
             parsed.append(part)
 
@@ -43,13 +52,21 @@ def create_endpoint(url):
 
 def endpoint(name, url,
              index_controller=None, child_controller=None,
-             children=[], child_type='int'):
+             children=[], child_type=int):
     """Returns a tuple to contruct API routes"""
     return (name, url, index_controller, child_controller, children, child_type)
 
 
 def create_routes(routes):
     """Returns an array of route tuples from a nested routes structure"""
+
+    def select_type(_type):
+        if _type is int:
+            return 'int'
+        elif _type is str:
+            return 'str'
+        else:
+            return 'int'
 
     parsed = []
 
@@ -60,6 +77,7 @@ def create_routes(routes):
             name, url, index_controller, child_controller, children, child_type = route # noqa
 
             url = url[1:] if url.startswith('/') else url
+            child_type = select_type(child_type)
 
             index_url = '{}/{}'.format(pre_url, url)
             child_url = '{}/{}/{}:{}_id'.format(pre_url, url, child_type, name)
