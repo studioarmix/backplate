@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name='backplate',
-    version='0.1.0',
+    version='0.1.1',
     description='RESTful API Helpers',
     author='Peter Boyer',
     author_email='petertboyer@gmail.com',
