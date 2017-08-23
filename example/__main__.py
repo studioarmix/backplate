@@ -1,13 +1,13 @@
 
-from flask import Flask
-from backplate import create_api, endpoint
+from backplate import create_api, Route
+
 from endpoints import Profile, Items, Item
 from errors import errors
 from throttler import use_throttler
 
-endpoints = [
-    endpoint('me', '/me', Profile),
-    endpoint('item', '/items', Items, Item)
+routes = [
+    Route('me', '/me', Profile),
+    Route('item', '/items', Items, Item)
 ]
 
 decorators = [
@@ -16,8 +16,7 @@ decorators = [
 
 app = create_api(
     __name__,
-    app=Flask(__name__),
-    endpoints=endpoints,
+    routes=routes,
     decorators=decorators,
     errors=errors
 )
