@@ -18,7 +18,7 @@ def errorsmap(errors):
 
 def create_api(
     handle, name='api',
-    endpoints=[], decorators=[], errors=[], mediatypes={},
+    routes=[], decorators=[], errors=[], mediatypes={},
     app=None, config=None, prefix='/v1',
     error_handler=None, json_output_handler=None, json_formatter=None
 ):
@@ -64,7 +64,7 @@ def create_api(
         api.representation(mediatype)(handler)
 
     # bind routes for api
-    bind_routes(api, create_routes(endpoints))
+    bind_routes(api, create_routes(routes))
 
     if not app:
         app = Flask(handle)
@@ -87,6 +87,7 @@ def create_api(
 
     # add index route
     @app.route('/')
+    @app.route(prefix)
     def index():
         return jsonify(_json_formatter('OK', 200))
 
