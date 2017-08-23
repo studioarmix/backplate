@@ -1,7 +1,7 @@
 
 import re
 
-from flask import Blueprint
+from flask import Flask, Blueprint, jsonify
 from flask_restful import Api
 from flask_cors import CORS
 
@@ -19,10 +19,10 @@ def errorsmap(errors):
 def create_api(
     handle, name='api',
     endpoints=[], decorators=[], errors=[], mediatypes={},
-    app=None, prefix='/v1',
+    app=None, config=None, prefix='/v1',
     error_handler=None, json_output_handler=None, json_formatter=None
 ):
-    """Returns flask blueprint and flask_restful Api object"""
+    """Returns flask app object"""
 
     bp = Blueprint(name, handle)
 
@@ -66,27 +66,43 @@ def create_api(
     # bind routes for api
     bind_routes(api, create_routes(endpoints))
 
-    if app:
-        app.api = api
-        app.api_blueprint = bp
+    if not app:
+        app = Flask(handle)
 
-        # add api blueprint to app
-        app.register_blueprint(bp, url_prefix=prefix)
+    if config:
+        app.config.from_object(config)
 
-        # add CORS origins headers to app, default '*'
-        CORS(app, resources={
-            r'' + re.escape(prefix) + r'/*': {
-                'origins': app.config.get('CORS_ORIGINS', '*')
-            }
-        })
+    app.api = api
+    app.api_blueprint = bp
 
-        # add general error handling
-        @app.errorhandler(Exception)
-        def handle_bad_request(e):
-            return _error_handler(e)
+    # add api blueprint to app
+    app.register_blueprint(bp, url_prefix=prefix)
 
-        return app
+    # add CORS origins headers to app, default '*'
+    CORS(app, resources={
+        r'' + re.escape(prefix) + r'/*': {
+            'origins': app.config.get('CORS_ORIGINS', '*')
+        }
+    })
 
-    return bp, api
+    # add index route
+    @app.route('/')
+    def index():
+        return jsonify(_json_formatter('OK', 200))
+
+    # add healthcheck endpoint
+    def healthcheck(f):
+        @app.route('/healthcheck')
+        def _healthcheck():
+            return jsonify(f())
+
+    app.healthcheck = healthcheck
+
+    # add general error handling
+    @app.errorhandler(Exception)
+    def handle_bad_request(e):
+        return _error_handler(e)
+
+    return app
 
 __all__ = ['create_api']
