@@ -32,7 +32,7 @@ Creating a simple Flask-based API app prefixed with `/v1`.
 
 from flask import Flask
 from flask_restful import Resource
-from backplate import create_api, endpoint
+from backplate import create_api, Route
 
 class Profile(Resource):
     # /v1/me
@@ -49,12 +49,12 @@ class Item(Resource):
     def get(self, id):
         return {'id': id}
 
-endpoints = [
-    endpoint('me', '/me', Profile),
-    endpoint('item', '/items', Items, Item)
+routes = [
+    Route('me', '/me', Profile),
+    Route('item', '/items', Items, Item)
 ]
 
-app = create_api(__name__, app=Flask(__name__), endpoints=endpoints)
+app = create_api(__name__, routes=routes)
 
 if __name__ == '__main__':
     app.run()

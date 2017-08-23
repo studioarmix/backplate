@@ -62,7 +62,7 @@ Creates API objects for app, and if passed `app` argument, will return app with 
   If specifying a custom `error_handler` or `json_output_handler`, this override will not be effective for the respective handler. Furthermore, if manually specifying the `mediatypes` parameter, this override will not be effective for the `json_output_handler`.
 
 - **Returns**
-  If specified as an arg, returns the passed `app` object instance, otherwise returns a tuple of the newly constructed `[flask.Blueprint, flask_restful.Api]`.
+  Returns the passed `app` object instance, otherwise returns a newly constructed Flask app instance.
 
 
 
