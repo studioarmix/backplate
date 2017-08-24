@@ -1,9 +1,17 @@
 
+import re
 import logging
 
 from flask import jsonify, current_app
 
 log = logging.getLogger(__name__)
+
+_underscorer1 = re.compile(r'(.)([A-Z][a-z]+)')
+_underscorer2 = re.compile('([a-z0-9])([A-Z])')
+
+def to_snake_case(s):
+    subbed = _underscorer1.sub(r'\1_\2', s)
+    return _underscorer2.sub(r'\1_\2', subbed).lower()
 
 class APIError(Exception):
     def __init__(self, code, status=None, message=None, data=None):
@@ -81,16 +89,14 @@ def create_error_handler(errors={}, json_formatter=None):
                 if ':' in msg and len(msg.split(' ')[0].strip()) == 3:
                     status = int(msg.split(' ')[0].strip())
                     code = msg[3:msg.index(':')].strip()
-                    code = '{}_{}'.format(
-                        status,
-                        code.replace(' ', '_').upper()
-                    )
+                    code = '{}_{}'.format(status, code)
                     message = str(e)[msg.index(':') + 1:].strip()
 
                 else:
-                    code = str(type(e).__name__).replace(' ', '_').upper()
+                    code = to_snake_case(str(type(e).__name__))
                     message = str(e)
 
+                code = code.replace(' ', '_').upper()
                 e = APIError(code, status, message, data)
 
         error = errors.get(e.code)
