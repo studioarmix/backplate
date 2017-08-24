@@ -1,7 +1,7 @@
 
 from .api import create_api
 from .routing import Route
-from .errors import APIError, errordef
+from .errors import APIException, Error
 from .throttling import (
     Throttle,
     ThrottlerBase,
@@ -9,8 +9,13 @@ from .throttling import (
 )
 
 __all__ = [
-    'create_api', 'Route',
-    'APIError', 'errordef',
-    'Throttle', 'ThrottlerBase',
-    'create_throttler_decorator'
+    # Core
+    'create_api',
+    # Defs
+    'Route',
+    'Error',
+    # Exceptions
+    'APIException',
+    # Throttling
+    'Throttle', 'ThrottlerBase', 'create_throttler_decorator'
 ]

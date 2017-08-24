@@ -9,13 +9,6 @@ from .errors import create_error_handler
 from .mediatypes import create_json_output_handler, format_json_response
 from .routing import bind_routes, create_routes
 
-def errorsmap(errors):
-    _errors = {}
-    for error in errors:
-        code = error['code']
-        _errors[code] = error
-    return _errors
-
 def create_api(
     handle, name='api',
     routes=[], decorators=[], errors=[], mediatypes={},
@@ -26,7 +19,7 @@ def create_api(
 
     bp = Blueprint(name, handle)
 
-    _errors = errorsmap(errors)
+    _errors = errors
     _mediatypes = mediatypes
 
     _json_formatter = json_formatter

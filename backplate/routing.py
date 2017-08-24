@@ -30,8 +30,10 @@ def create_url(url):
 class Route:
     def __init__(self,
                  name, url,
-                 index_controller=None, child_controller=None,
-                 children=[], child_type=int):
+                 index_controller=None,
+                 child_controller=None,
+                 children=[],
+                 child_type=int):
 
         self.name = name
         self.url = url

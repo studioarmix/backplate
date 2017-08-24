@@ -13,96 +13,98 @@ def to_snake_case(s):
     subbed = _underscorer1.sub(r'\1_\2', s)
     return _underscorer2.sub(r'\1_\2', subbed).lower()
 
-class APIError(Exception):
-    def __init__(self, code, status=None, message=None, data=None):
-        self.code = code
+class APIException(Exception):
+    def __init__(self,
+                 status=None,
+                 code=None,
+                 message=None,
+                 data=None):
+
         self.status = status
+        self.code = code
         self.message = message
         self.data = data
 
     def format(self):
-        code = self.code
-        status = self.status
-        message = self.message
-        data = self.data
-
         error_object = {
-            'code': code,
-            'status': status,
-            'message': message,
+            'code': self.code,
+            'status': self.status,
+            'message': self.message,
         }
 
-        if data:
-            error_object['data'] = data
+        if self.data:
+            error_object['data'] = self.data
 
         return error_object
 
-def errordef(code, status=400, message=None, exception=None):
-    return {
-        'code': code,
-        'status': status,
-        'message': message,
-        'exception': exception
-    }
+class Error:
+    def __init__(self,
+                 status=400,
+                 code=None,
+                 exception=None,
+                 message=None):
+
+        self.status = status
+
+        self.code = code
+        self.exception = exception
+        self.message = message
 
 def create_error_handler(errors={}, json_formatter=None):
 
-    exception_code_map = {}
-    for error_code in errors:
-        error = errors[error_code]
-        exception = error['exception']
-        if exception:
-            exception_code_map[exception] = error['code']
+    error_code_map = {}
+    error_exception_map = {}
+
+    for error in errors:
+        if error.code:
+            error_code_map[error.code] = error
+        if error.exception:
+            error_exception_map[error.exception] = error
 
     def handle_error(e):
-        # get exception status code, default 500 for unknown/generic
-        status = getattr(e, 'code', 500)
+        error = None
 
-        exception_type = type(e)
-        if exception_type is not APIError:
-            # look for exception type from bases of exception
-            if exception_type not in exception_code_map:
-                for base in exception_type.__bases__:
-                    if base in exception_code_map:
-                        exception_type = base
+        # get exception status code, default 500 for unknown/generic
+        code = to_snake_case(str(type(e).__name__)).upper()
+        status = getattr(e, 'code', 500)
+        message = str(e)
+        data = getattr(e, 'data', None)
+
+        e_type = type(e)
+        if e_type is APIException:
+            # ready
+            error = e
+
+        else:
+            # set error from exception map
+            error = error_exception_map.get(e_type)
+
+            # fallback to bases of the class
+            if not error:
+                for base in e_type.__bases__:
+                    if base in error_exception_map:
+                        error = error_exception_map.get(base)
                         break
 
-            # if the exception (or any of its bases) registered
-            if exception_type in exception_code_map:
-                exception_code = exception_code_map.get(exception_type)
-                error = errors.get(exception_code)
-
-                code = error['code']
-                status = error['status']
-                message = error['message'] or str(e)
-
-                e = APIError(code, status, message)
-
             # default to generic exceptions
-            else:
-                code = None
-                status = status
-                message = None
-                data = getattr(e, 'data', None)
+            if not error:
+                if ':' in message and len(message.split(' ')[0].strip()) == 3:
+                    status = int(message.split(' ')[0].strip())
+                    code = message[3:message.index(':')] \
+                        .strip()
+                    code = '{}_{}'.format(status, code) \
+                        .replace(' ', '_').upper()
+                    message = message[message.index(':') + 1:] \
+                        .strip()
 
-                msg = str(e)
-                if ':' in msg and len(msg.split(' ')[0].strip()) == 3:
-                    status = int(msg.split(' ')[0].strip())
-                    code = msg[3:msg.index(':')].strip()
-                    code = '{}_{}'.format(status, code)
-                    message = str(e)[msg.index(':') + 1:].strip()
+        code = (error and error.code) or code
+        status = (error and error.status) or status
+        message = (error and error.message) or message
+        e = APIException(status, code, message, data)
 
-                else:
-                    code = to_snake_case(str(type(e).__name__))
-                    message = str(e)
-
-                code = code.replace(' ', '_').upper()
-                e = APIError(code, status, message, data)
-
-        error = errors.get(e.code)
         if error:
-            e.status = e.status or error['status']
-            e.message = e.message or error['message']
+            e.status = e.status or error.status
+            e.message = e.message or error.message
 
         # log exception if 500 server error
         # remove message for consumer facing data if not on DEBUG mode
@@ -121,4 +123,4 @@ def create_error_handler(errors={}, json_formatter=None):
         return resp, status
     return handle_error
 
-__all__ = ['APIError', 'errordef']
+__all__ = ['APIException', 'Error']
