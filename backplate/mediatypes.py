@@ -13,8 +13,8 @@ def create_json_output_handler(json_formatter=None):
         # catch return exceptions syntax sugar
         if isinstance(data, BaseException):
             raise APIException(
+                type(data).__name__.upper(),
                 status,
-                code=type(data).__name__.upper(),
                 message=str(data)
             )
 

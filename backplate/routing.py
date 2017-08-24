@@ -27,7 +27,7 @@ def create_url(url):
     return '/{}'.format('/'.join(parsed))
 
 
-class Route:
+class Route(object):
     def __init__(self,
                  name, url,
                  index_controller=None,
