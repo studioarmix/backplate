@@ -1,6 +1,6 @@
 
 from flask_restful import Resource
-from backplate import APIError
+from backplate import APIException
 from errors import ERR_TEAPOT, CustomTeabagError
 
 class Items(Resource):
@@ -14,7 +14,7 @@ class Item(Resource):
         if id <= 20:
             return {'id': id}
         elif id > 20 and id < 30:
-            raise APIError(ERR_TEAPOT, data={
+            raise APIException(ERR_TEAPOT, data={
                 'fields': {'random': 'Incorrect anything.'}})
         else:
             raise CustomTeabagError

@@ -82,16 +82,16 @@ Creates API objects for app, and if passed `app` argument, will return app with 
 
 ### Definition Helpers
 
-### `endpoint(name, url, ...)`
+### `Route(name, url, ...)`
 
 ```python
-from backplate import endpoint
+from backplate import Route
 ```
 
 Creates tuples for use with `backplate.create_api` internal route processing and binding.
 
 - `name: string`
-  Unique name for endpoint node; used to generate resource endpoint paths.
+  Unique name for Route node; used to generate resource Route paths.
 - `url: string`
   Unique url path name with leading `/`, e.g. `'/items'`.
 - `index_controller?: flask_restful.Resource`
@@ -100,7 +100,7 @@ Creates tuples for use with `backplate.create_api` internal route processing and
   Also expects a class inheriting a `flask_restful.Resource` object, used for when the route is accessed with a child id i.e. `/items/1`.
   The `id` passed as the a parameter of the class instance's various response methods e.g. `get(self, id)`, `post(self, id)` etc. and for nested routes is passed as parameters in parent to leaf order.
 - `children?: array<tuple> = []`
-  An array of child endpoints generated with `backplate.endpoint()`, to allow for nesting url structures, e.g. `/items/:id/attachments`.
+  An array of child endpoints generated with `backplate.Route()`, to allow for nesting url structures, e.g. `/items/:id/attachments`.
 - `child_type?: string = 'int'`
   A reference to the type of argument to expect from, of either `int` or `string`.
 - **Returns**
@@ -108,16 +108,16 @@ Creates tuples for use with `backplate.create_api` internal route processing and
 
 
 
-### `errordef(code, ...)`
+### `Error(code, ...)`
 
 ```python
-from backplate import errordef
+from backplate import Error
 ```
 
 Creates dict objects for use with `backplate.create_api` internal error processing.
 
 - `code: string`
-  Unique code that will remain constant and consistent for clients to consume. Using this code in an `backplate.APIError` constructor will use all properties further defined below as a fall-back and provide a consistent error reporting experience.
+  Unique code that will remain constant and consistent for clients to consume. Using this code in an `backplate.APIException` constructor will use all properties further defined below as a fall-back and provide a consistent error reporting experience.
 - `status?: int = 400`
   HTTP status code that will be used by default when reporting this error.
 - `message?: string = None`
@@ -132,13 +132,13 @@ Creates dict objects for use with `backplate.create_api` internal error processi
 ### Exceptions
 
 ```python
-from backplate import APIError
+from backplate import APIException
 ```
 
 The base exception object that is constructed with additonal data attributes to describe an API error with contextual HTTP terms.
 
 - `code: string`
-  Unique code that preferably refers to a previously defined `errordef()` that has been passed into the `create_api()` function. If the `code` has been registered with the API a response will fall-back to those values, however these can be overridden with contextual information by defining the properties further defined below.
+  Unique code that preferably refers to a previously defined `Error()` that has been passed into the `create_api()` function. If the `code` has been registered with the API a response will fall-back to those values, however these can be overridden with contextual information by defining the properties further defined below.
 - `status?: int = 400`
   HTTP status code to be used in the response.
 - `message? string = None`

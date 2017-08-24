@@ -1,5 +1,5 @@
 
-from backplate import errordef
+from backplate import Error
 
 class CustomTeabagError(Exception):
     pass
@@ -9,7 +9,7 @@ ERR_TEABAG = 'ERR_TEABAG'
 
 errors = [
     # error from APIError
-    errordef(ERR_TEAPOT, 418, 'I am a custom error.'),
+    Error(ERR_TEAPOT, 418, 'I am a custom error.'),
     # catch raised exception CustomTeabagError
-    errordef(ERR_TEABAG, 419, exception=CustomTeabagError)
+    Error(CustomTeabagError, 419, code=ERR_TEABAG)
 ]
