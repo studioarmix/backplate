@@ -1,21 +1,19 @@
 
-from .api import create_api
+from .api import create_api as BackplateAPI
 from .routing import Route
-from .errors import APIException, Error
+from .errors import Error
 from .throttling import (
     Throttle,
     ThrottlerBase,
-    create_throttler_decorator
+    create_throttler_decorator,
 )
 
 __all__ = [
     # Core
-    'create_api',
+    'BackplateAPI',
     # Defs
     'Route',
     'Error',
-    # Exceptions
-    'APIException',
     # Throttling
-    'Throttle', 'ThrottlerBase', 'create_throttler_decorator'
+    'Throttle', 'ThrottlerBase', 'create_throttler_decorator',
 ]

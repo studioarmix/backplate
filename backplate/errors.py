@@ -1,140 +1,127 @@
-
 import re
 import logging
-import inspect
+import traceback
 
 from flask import jsonify, current_app
-from werkzeug.exceptions import HTTPException
+from werkzeug.http import HTTP_STATUS_CODES
+from werkzeug.exceptions import HTTPException, InternalServerError, _aborter
 
 log = logging.getLogger(__name__)
 
-_underscorer1 = re.compile(r'(.)([A-Z][a-z]+)')
-_underscorer2 = re.compile('([a-z0-9])([A-Z])')
-
-def to_snake_case(s):
-    subbed = _underscorer1.sub(r'\1_\2', s)
-    return _underscorer2.sub(r'\1_\2', subbed).lower()
-
-def parse_http_error(s):
-    if ':' in s and len(s.split(' ')[0].strip()) == 3:
-        status = int(s.split(' ')[0].strip())
-        code = s[3:s.index(':')].strip()
-        code = '{}_{}'.format(status, code).replace(' ', '_').upper()
-        message = re.sub(' +', ' ', s[s.index(':') + 1:]).strip()
-        return {'status': status, 'code': code, 'message': message}
-    return None
-
-class APIException(Exception):
-    def __init__(self,
-                 code=None,
-                 status=None,
-                 message=None,
-                 data=None,
-                 exception=None):
-
-        self.code = code
-        self.status = status
-        self.message = message
-        self.data = data
-
-        if exception:
-            self.code = to_snake_case(str(type(exception).__name__)).upper()
-            self.status = getattr(exception, 'status', None)
-            self.message = str(exception)
-            self.data = getattr(exception, 'data', None)
-
-    def format(self):
-        obj = {
-            'code': self.code,
-            'status': self.status,
-            'message': self.message,
-        }
-
-        if self.data:
-            obj['data'] = self.data
-
-        return obj
 
 class Error(object):
-    def __init__(self,
-                 handle,
-                 status=None,
-                 message=None,
-                 code=None):
+    def __init__(self, exception, code=400, typename=None):
+        self.exception = exception
+        self.code = code
+        self.typename = typename
 
-        if inspect.isclass(handle) and issubclass(handle, BaseException):
-            self.exception = handle
-            self.code = code
-        else:
-            self.exception = None
-            self.code = handle
 
-        self.status = status
-        self.message = message
+def fmttype(string):
+    return string.replace(' ', '_').upper()
 
-def create_error_handler(errors={}, json_formatter=None):
 
-    error_code_map = {}
-    error_exception_map = {}
+def fmtmessage(string):
+    return re.sub(r'\s{2,}', ' ', string)
+
+
+def fmtstackline(line):
+    line = re.sub(r'(\n\s*)$', '', line)
+    line = re.sub(r'(\n\s*)', ' => ', line)
+    line = line.strip().replace('"', "'")
+    return line
+
+
+def fmtstack(stack):
+    return [fmtstackline(line) for line in stack]
+
+
+def create_error_handler(errors=[], json_formatter=None):
+
+    exception_code_map = {}
 
     for error in errors:
-        if error.code and not error.exception:
-            error_code_map[error.code] = error
-        if error.exception:
-            error_exception_map[error.exception] = error
+        exception_code_map[error.exception] = {
+            'code': error.code,
+            'type': fmttype(error.typename) if error.typename else None,
+        }
 
     def handle_error(e):
-        error = None
-        e_type = type(e)
+        error_class = type(e)
 
-        if e_type is APIException:
-            error = e
-            base = error_code_map.get(error.code)
+        error_code = 500
+        error_type = fmttype(HTTP_STATUS_CODES.get(500))
+        error_message = fmtmessage(InternalServerError.description),
+        error_data = None
 
-            if base:
-                error.status = error.status or (base and base.status)
-                error.message = error.message or (base and base.message)
+        # format http exceptions
+        if issubclass(error_class, HTTPException):
+            error_code = e.code
+            error_type = fmttype(e.name)
+            error_message = fmtmessage(e.message)
 
-        elif issubclass(e_type, HTTPException):
-            e_message = str(e)
-            e_parsed = parse_http_error(e_message)
+        # then userland exceptions
+        elif error_class in exception_code_map:
+            exception_mapping = exception_code_map[error_class]
+            error_code = exception_mapping.get('code')
+            error_type = exception_mapping.get('type') or 'REQUEST_ERROR'
 
-            error = APIException(
-                e_parsed.get('code'),
-                e_parsed.get('status') or 500,
-                e_parsed.get('message')
-            )
+            args = e.args[0] if len(e.args) else []
+            print(args)
 
+            # one arg, just error data
+            if len(args) == 1:
+                error_data = args[0]
+            # two args, error typedef and then data
+            elif len(args) == 2:
+                # allocate error data from second arg
+                error_data = args[1]
+                # allocate type from first arg
+                error_type = args[0]
+                # if it's a tuple it could describe both type and code
+                if type(error_type) is tuple:
+                    # one arg, just type
+                    if len(error_type) == 1:
+                        error_type = error_type[0]
+                    # two args, type and then code override
+                    elif len(error_type) == 2:
+                        error_code = error_type[1]
+                        error_type = error_type[0]
+                    else:
+                        raise ValueError(
+                            'expecting error typedef with max 2 values')
+
+            if error_code in _aborter.mapping:
+                error_message = fmtmessage(
+                    _aborter.mapping[error_code].description)
+
+        # everything uncaught
         else:
-            error = APIException(exception=e)
-            base = error_exception_map.get(e_type)
+            DEBUG = current_app.config.get('DEBUG')
+            if DEBUG:
+                error_data = {
+                    'message': str(e),
+                    'stack': fmtstack(traceback.format_list(
+                        traceback.extract_tb(e.__traceback__))),
+                }
 
-            if not base:
-                for _base in e_type.__bases__:
-                    if _base in error_exception_map:
-                        base = error_exception_map.get(_base)
-                        break
-
-            error.code = error.code or (base and base.code)
-            error.status = error.status or (base and base.status) or 500
-            error.message = error.message or (base and base.message)
-
-        status = error.status
-        if status >= 500:
-            # log exception if 5xx server error
+        if error_code >= 500:
             log.exception(e)
-            # remove message for consumer facing data if not on DEBUG mode
-            if current_app.config.get('DEBUG') is not True:
-                e.message = None
 
-        # json formatter for data envelopes
-        data = error.format()
+        error = {
+            'code': error_code,
+            'type': error_type,
+            'message': error_message,
+            'data': error_data,
+        }
+
         if callable(json_formatter):
-            data = json_formatter(data, status)
+            error = json_formatter(error, error_code)
 
-        resp = jsonify(data)
-        return resp, status
+        return jsonify(error), error_code
 
     return handle_error
 
-__all__ = ['APIException', 'Error']
+
+__all__ = [
+    'Error',
+]

@@ -1,7 +1,2 @@
 [flake8]
-ignore = E261, W291, E302
-exclude =
-    .git,
-    venv,
-
-max-line-length = 80
+exclude=.git,venv,

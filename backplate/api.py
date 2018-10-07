@@ -9,6 +9,7 @@ from .errors import create_error_handler
 from .mediatypes import create_json_output_handler, format_json_response
 from .routing import bind_routes, create_routes
 
+
 def create_api(
     handle, name='api',
     routes=[], decorators=[], errors=[], mediatypes={},
