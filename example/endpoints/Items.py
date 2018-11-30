@@ -3,10 +3,12 @@ from flask_restful import Resource
 from backplate import APIException
 from errors import ERR_TEAPOT, CustomTeabagError
 
+
 class Items(Resource):
     # /v1/items
     def get(self):
         return [{'id': idx} for idx in range(0, 20)]
+
 
 class Item(Resource):
     # /v1/items/:id

@@ -4,6 +4,7 @@ from datetime import datetime
 from functools import wraps
 from flask import abort, g
 
+
 class Throttle(object):
 
     def __init__(self, hits=None, last=None, obj={}):
@@ -109,9 +110,10 @@ def create_throttler_decorator(Throttler):
             user_id = throttler.resolve_user_id()
             if throttler.request(id=user_id):
                 return f(*args, **kwargs)
-            return abort(429) # Too Many Requests
+            return abort(429)  # Too Many Requests
 
         return wrapped
     return wrapper
+
 
 __all__ = ['Throttle', 'ThrottlerBase', 'create_throttler_decorator']

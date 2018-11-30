@@ -110,4 +110,5 @@ def bind_routes(api, routes=[]):
         url, controller, endpoint = route
         add_route(url, controller, endpoint)
 
+
 __all__ = ['Route']

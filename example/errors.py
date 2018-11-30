@@ -1,8 +1,10 @@
 
 from backplate import Error
 
+
 class CustomTeabagError(Exception):
     pass
+
 
 ERR_TEAPOT = 'ERR_TEAPOT'
 ERR_TEABAG = 'ERR_TEABAG'

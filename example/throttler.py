@@ -10,6 +10,7 @@ options = {
     'timeframe': 10
 }
 
+
 class Throttler(ThrottlerBase):
     def get_throttle(self, id):
         if id not in database:
@@ -28,6 +29,7 @@ class Throttler(ThrottlerBase):
 
     def on_throttle_exceed(self, id):
         print('exceeding: {}'.format(id))
+
 
 throttler = Throttler(**options)
 use_throttler = create_throttler_decorator(throttler)
