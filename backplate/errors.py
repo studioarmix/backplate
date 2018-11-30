@@ -9,6 +9,37 @@ from werkzeug.exceptions import HTTPException, InternalServerError, _aborter
 log = logging.getLogger(__name__)
 
 
+class BackplateError(Exception):
+    _exceptions = {}
+
+    code = 400
+    type = 'GENERAL_EXCEPTION'
+    message = 'Application request failed.'
+
+    def __init__(self, type, data=None):
+        exception = self._exceptions.get(type)
+        if not exception:
+            raise ValueError(
+                f'{type} is not assigned with {type(self).__name__}.')
+
+        self.type = type
+        self.code = exception[0]
+        self.message = exception[1]
+        super().__init__(self.message)
+        self.data = data
+
+    @classmethod
+    def assign(cls, exceptions):
+        for key, value in exceptions.items():
+            if type(value) is not tuple:
+                raise ValueError(
+                    f"{key} definition '{value}' is not a tuple.")
+            if len(value) != 2:
+                raise ValueError(
+                    f"{key} definition requires tuple of (code, message,)")
+        cls._exceptions = exceptions
+
+
 class Error(object):
     def __init__(self, exception, code=400, typename=None):
         self.exception = exception
@@ -57,7 +88,18 @@ def create_error_handler(errors=[], json_formatter=None):
         if issubclass(error_class, HTTPException):
             error_code = e.code
             error_type = fmttype(e.name)
-            error_message = fmtmessage(e.message)
+            error_message = fmtmessage(e.description)
+
+            _data = getattr(e, 'data', None)
+            error_data = (
+                _data.get('messages', None)
+                if type(_data) is dict else None)
+
+        elif issubclass(error_class, BackplateError):
+            error_code = e.code
+            error_type = e.type
+            error_message = str(e)
+            error_data = e.data
 
         # then userland exceptions
         elif error_class in exception_code_map:
@@ -66,10 +108,12 @@ def create_error_handler(errors=[], json_formatter=None):
             error_type = exception_mapping.get('type') or 'REQUEST_ERROR'
 
             args = e.args[0] if len(e.args) else []
-            print(args)
+            args = (args,) if type(args) is not tuple else args
 
+            if type(args) is str:
+                error_data = args
             # one arg, just error data
-            if len(args) == 1:
+            elif len(args) == 1:
                 error_data = args[0]
             # two args, error typedef and then data
             elif len(args) == 2:
